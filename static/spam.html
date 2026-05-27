@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpamGuard AI: Premium Email & Text Classifier</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <meta name="description" content="An interactive, high-fidelity machine learning sandbox to train, analyze, and test Naive Bayes and Support Vector Machine (SVM) spam email classifiers with visual word-level explainers.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Style Sheet -->
+    <link rel="stylesheet" href="/spam.css">
+</head>
+<body>
+    <!-- Background glowing orbs -->
+    <div class="glow-orb orb-primary"></div>
+    <div class="glow-orb orb-secondary"></div>
+    <div class="glow-orb orb-tertiary"></div>
+
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div class="logo-text">
+                    <h1>SpamGuard <span>AI</span></h1>
+                    <p>Interactive Spam Email & Text Classification Sandbox</p>
+                </div>
+            </div>
+            <div class="header-status">
+                <span class="status-indicator online"></span>
+                <span class="status-label">Active Inference Engine</span>
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <main class="dashboard-workspace">
+            
+            <!-- COLUMN 1: SCAN CENTER -->
+            <section class="workspace-col col-scanner">
+                <div class="glass-card scanner-card">
+                    <div class="card-header">
+                        <h2><i class="fa-solid fa-envelope-open-text"></i> Interactive Scanner</h2>
+                        <span class="badge badge-accent">Live Scanning</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="section-desc">Type, paste, or select a sample email below to run a real-time spam vulnerability scan.</p>
+                        
+                        <!-- Quick Presets -->
+                        <div class="presets-container">
+                            <span class="preset-label">Sample Presets:</span>
+                            <div class="preset-pills" id="presetPills">
+                                <!-- Loaded dynamically via JS -->
+                                <span class="preset-skeleton-pill"></span>
+                                <span class="preset-skeleton-pill"></span>
+                                <span class="preset-skeleton-pill"></span>
+                            </div>
+                        </div>
+
+                        <!-- Scan Input -->
+                        <div class="input-wrapper">
+                            <textarea id="scanInput" placeholder="Type or paste email/message content here..." maxlength="5000"></textarea>
+                            <div class="textarea-footer">
+                                <span id="charCount">0 / 5000 characters</span>
+                                <button id="clearBtn" class="btn-icon" title="Clear input"><i class="fa-solid fa-trash-can"></i></button>
+                            </div>
+                        </div>
+
+                        <!-- Model Selection for Predict -->
+                        <div class="predict-model-select">
+                            <label>Scan using: </label>
+                            <div class="segmented-control mini">
+                                <button class="segment-btn active" data-pred-model="naive_bayes" id="btnPredNB">Naive Bayes</button>
+                                <button class="segment-btn" data-pred-model="svm" id="btnPredSVM">SVM</button>
+                            </div>
+                        </div>
+
+                        <button id="scanBtn" class="btn btn-primary btn-glow">
+                            <i class="fa-solid fa-wand-magic-sparkles animate-sparkle"></i> Scan Email Content
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SCAN RESULTS (Shows after scanning) -->
+                <div class="glass-card results-card hidden" id="resultsCard">
+                    <div class="card-header">
+                        <h2><i class="fa-solid fa-square-poll-vertical"></i> Scan Report</h2>
+                        <button id="closeResultsBtn" class="btn-close" title="Dismiss report">&times;</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="metrics-summary-grid">
+                            <!-- Gauge -->
+                            <div class="result-gauge-box">
+                                <svg class="progress-ring" width="120" height="120">
+                                    <circle class="progress-ring__circle-bg" stroke="rgba(255,255,255,0.05)" stroke-width="8" fill="transparent" r="50" cx="60" cy="60"/>
+                                    <circle class="progress-ring__circle" id="resultRing" stroke="var(--accent-color)" stroke-width="8" fill="transparent" r="50" cx="60" cy="60"/>
+                                </svg>
+                                <div class="gauge-value" id="resultPercentage">0%</div>
+                                <div class="gauge-label">Spam Probability</div>
+                            </div>
+                            <!-- Badge & Details -->
+                            <div class="result-details-box">
+                                <div class="classification-badge-container">
+                                    <div class="classification-badge" id="resultBadge">UNKNOWN</div>
+                                </div>
+                                <div class="details-list">
+                                    <div class="detail-item">
+                                        <span class="detail-name">Scanning Model:</span>
+                                        <span class="detail-val" id="resultModelName">Naive Bayes</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-name">Confidence Level:</span>
+                                        <span class="detail-val" id="resultConfidence">0.0%</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-name">Word Count:</span>
+                                        <span class="detail-val" id="resultWordCount">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Highlight Explainer -->
+                        <div class="explainer-section">
+                            <div class="explainer-header">
+                                <h3><i class="fa-solid fa-chart-simple"></i> Word-Level Feature Contributions</h3>
+                                <div class="legend">
+                                    <span class="legend-pill spammy"><span class="legend-color"></span> Spammy</span>
+                                    <span class="legend-pill hammy"><span class="legend-color"></span> Hammy</span>
+                                </div>
+                            </div>
+                            <p class="explainer-sub">Hover over highlighted words to see their contribution strength toward the final decision.</p>
+                            <div class="highlighted-text-canvas" id="highlightedCanvas">
+                                <!-- Highlighted words rendered here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- COLUMN 2: CONTROLS & METRICS -->
+            <section class="workspace-col col-analytics">
+                
+                <!-- MODEL SANDBOX CARD -->
+                <div class="glass-card sandbox-card">
+                    <div class="card-header">
+                        <h2><i class="fa-solid fa-flask"></i> Model Training Sandbox</h2>
+                        <span class="badge badge-online" id="statusMessageBadge">Model Ready</span>
+                    </div>
+                    <div class="card-body">
+                        
+                        <div class="tabs-control">
+                            <button class="tab-btn active" data-model-tab="naive_bayes" id="tabNB">Multinomial Naive Bayes</button>
+                            <button class="tab-btn" data-model-tab="svm" id="tabSVM">Support Vector Machine (SVM)</button>
+                        </div>
+
+                        <!-- Hyperparameter Forms -->
+                        <div class="form-container">
+                            
+                            <!-- VECTORIZER CONFIG (SHARED) -->
+                            <div class="form-section-header">Shared Text Vectorizer (TF-IDF)</div>
+                            <div class="hyper-grid">
+                                <div class="form-group">
+                                    <label for="maxFeatures">Max Vocabulary Size <i class="fa-solid fa-circle-info tooltip-trigger" title="Maximum number of unique words to include in training vectorizer."></i></label>
+                                    <select id="maxFeatures">
+                                        <option value="500">500 (Compact & Fast)</option>
+                                        <option value="1500">1500 (Standard)</option>
+                                        <option value="2500" selected>2500 (Recommended)</option>
+                                        <option value="5000">5000 (Detailed)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="stopWords">Stop Words <i class="fa-solid fa-circle-info tooltip-trigger" title="Remove common structural English words like 'the', 'is', 'and' that lack classification meaning."></i></label>
+                                    <select id="stopWords">
+                                        <option value="english" selected>English (Recommended)</option>
+                                        <option value="none">None</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="ngramRange">N-gram Range <i class="fa-solid fa-circle-info tooltip-trigger" title="Unigrams analyze single words. Bigrams analyze sequences of 2 consecutive words to preserve context (e.g. 'earn cash')."></i></label>
+                                    <select id="ngramRange">
+                                        <option value="1" selected>Unigrams (1-1)</option>
+                                        <option value="2">Bigrams (1-2)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="splitRatio">Test Set Ratio <i class="fa-solid fa-circle-info tooltip-trigger" title="Percentage of emails isolated to test the model's accuracy on unseen data."></i></label>
+                                    <div class="slider-container">
+                                        <input type="range" id="splitRatio" min="15" max="40" step="5" value="25">
+                                        <span class="slider-val" id="splitRatioVal">25%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- MODEL SPECIFIC CONFIG -->
+                            <div class="form-section-header">Model Hyperparameters</div>
+                            
+                            <!-- NB Params -->
+                            <div class="hyper-grid model-params-sec" id="nbParamsSec">
+                                <div class="form-group span-2">
+                                    <label for="nbAlpha">Laplace Smoothing (Alpha): <span id="nbAlphaVal" class="param-val">1.0</span> <i class="fa-solid fa-circle-info tooltip-trigger" title="Smoothing constant. Prevents probability from dropping to zero for words unseen in training."></i></label>
+                                    <input type="range" id="nbAlpha" min="0.1" max="5.0" step="0.1" value="1.0">
+                                </div>
+                            </div>
+
+                            <!-- SVM Params -->
+                            <div class="hyper-grid model-params-sec hidden" id="svmParamsSec">
+                                <div class="form-group">
+                                    <label for="svmC">Regularization parameter (C): <span id="svmCVal" class="param-val">1.0</span> <i class="fa-solid fa-circle-info tooltip-trigger" title="Controls margin size and training error trade-off. Lower C yields smoother boundary; higher C penalizes misclassifications heavily."></i></label>
+                                    <input type="range" id="svmC" min="0.1" max="10.0" step="0.5" value="1.0">
+                                </div>
+                                <div class="form-group">
+                                    <label for="svmKernel">Kernel Kernel <i class="fa-solid fa-circle-info tooltip-trigger" title="Linear kernel creates flat separation. RBF kernel creates high-dimensional complex non-linear boundaries."></i></label>
+                                    <select id="svmKernel">
+                                        <option value="linear" selected>Linear (Interpretable & Fast)</option>
+                                        <option value="rbf">RBF (High Complexity)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Dataset subset configuration -->
+                            <div class="hyper-grid mt-1">
+                                <div class="form-group span-2">
+                                    <label for="subsetSize">Training Dataset Subset: <span id="subsetSizeVal" class="param-val">3000 (Fast)</span> <i class="fa-solid fa-circle-info tooltip-trigger" title="Select a smaller subset for fast responsive training cycles, or use full UCI dataset for ultimate metrics."></i></label>
+                                    <input type="range" id="subsetSize" min="500" max="5574" step="500" value="3000">
+                                </div>
+                            </div>
+
+                            <button id="trainBtn" class="btn btn-secondary btn-glow mt-1">
+                                <i class="fa-solid fa-gear" id="trainBtnIcon"></i> Train Selected Model
+                            </button>
+                        </div>
+
+                        <!-- Pseudo-Terminal Console Log -->
+                        <div class="terminal-console">
+                            <div class="terminal-header">
+                                <span class="terminal-dot red"></span>
+                                <span class="terminal-dot yellow"></span>
+                                <span class="terminal-dot green"></span>
+                                <span class="terminal-title">Model Training Console</span>
+                            </div>
+                            <div class="terminal-body" id="consoleLogs">
+                                <div class="terminal-line">[15:43:04] Ready for model training operations.</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ANALYTICS DASHBOARD -->
+                <div class="glass-card analytics-card">
+                    <div class="card-header">
+                        <h2><i class="fa-solid fa-chart-line"></i> Performance Analytics & Comparison</h2>
+                    </div>
+                    <div class="card-body">
+                        
+                        <!-- Side-by-Side Model Stats -->
+                        <div class="comparison-grid">
+                            
+                            <!-- NAIVE BAYES METRICS -->
+                            <div class="model-stat-column" id="statColNB">
+                                <div class="column-header">
+                                    <i class="fa-solid fa-pie-chart icon-nb"></i>
+                                    <h3>Naive Bayes</h3>
+                                    <span class="status-dot trained" id="trainedDotNB" title="Trained"></span>
+                                </div>
+                                <div class="metrics-list">
+                                    <div class="metric-progress-item">
+                                        <div class="metric-progress-info">
+                                            <span class="m-title">Accuracy</span>
+                                            <span class="m-val" id="accNB">--%</span>
+                                        </div>
+                                        <div class="progress-bar-bg"><div class="progress-bar-fill" id="accBarNB" style="width: 0%"></div></div>
+                                    </div>
+                                    <div class="metric-progress-item">
+                                        <div class="metric-progress-info">
+                                            <span class="m-title">Precision</span>
+                                            <span class="m-val" id="precNB">--%</span>
+                                        </div>
+                                        <div class="progress-bar-bg"><div class="progress-bar-fill" id="precBarNB" style="width: 0%"></div></div>
+                                    </div>
+                                    <div class="metric-progress-item">
+                                        <div class="metric-progress-info">
+                                            <span class="m-title">Recall</span>
+                                            <span class="m-val" id="recNB">--%</span>
+                                        </div>
+                                        <div class="progress-bar-bg"><div class="progress-bar-fill" id="recBarNB" style="width: 0%"></div></div>
+                                    </div>
+                                    <div class="metric-progress-item">
+                                        <div class="metric-progress-info">
+                                            <span class="m-title">F1-Score</span>
+                                            <span class="m-val" id="f1NB">--%</span>
+                                        </div>
+                                        <div class="progress-bar-bg"><div class="progress-bar-fill" id="f1BarNB" style="width: 0%"></div></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SVM METRICS -->
+                            <div class="model-stat-column" id="statColSVM">
+                                <div class="column-header">
+                                    <i class="fa-solid fa-circle-nodes icon-svm"></i>
+                                    <h3>SVM</h3>
+                                    <span class="status-dot" id="trainedDotSVM" title="Not Trained"></span>
+                                </div>
+                                <div class="metrics-list">
+                                    <div class="metric-progress-item">
+                                        <div class="metric-progress-info">
+                                            <span class="m-title">Accuracy</span>
+                                            <span class="m-val" id="accSVM">--%</span>
+                                        </div>
+                                        <div class="progress-bar-bg"><div class="progress-bar-fill" id="accBarSVM" style="width: 0%"></div></div>
+                                    </div>
+                                    <div class="metric-progress-item">
+                                        <div class="metric-progress-info">
+                                            <span class="m-title">Precision</span>
+                                            <span class="m-val" id="precSVM">--%</span>
+                                        </div>
+                                        <div class="progress-bar-bg"><div class="progress-bar-fill" id="precBarSVM" style="width: 0%"></div></div>
+                                    </div>
+                                    <div class="metric-progress-item">
+                                        <div class="metric-progress-info">
+                                            <span class="m-title">Recall</span>
+                                            <span class="m-val" id="recSVM">--%</span>
+                                        </div>
+                                        <div class="progress-bar-bg"><div class="progress-bar-fill" id="recBarSVM" style="width: 0%"></div></div>
+                                    </div>
+                                    <div class="metric-progress-item">
+                                        <div class="metric-progress-info">
+                                            <span class="m-title">F1-Score</span>
+                                            <span class="m-val" id="f1SVM">--%</span>
+                                        </div>
+                                        <div class="progress-bar-bg"><div class="progress-bar-fill" id="f1BarSVM" style="width: 0%"></div></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Confusion Matrix & Keywords -->
+                        <div class="advanced-analytics-grid">
+                            
+                            <!-- CONFUSION MATRIX -->
+                            <div class="analytics-sub-card">
+                                <h3><i class="fa-solid fa-table-cells-large"></i> Confusion Matrix</h3>
+                                <p class="sub-card-desc">Evaluations on current active model (<span id="cmModelName">Naive Bayes</span>)</p>
+                                <div class="confusion-matrix-grid">
+                                    <div class="cm-cell tn-cell" title="True Negative: Legitimate email correctly classified.">
+                                        <div class="cm-label">True Ham (TN)</div>
+                                        <div class="cm-value" id="cmTN">0</div>
+                                    </div>
+                                    <div class="cm-cell fp-cell" title="False Positive: Legitimate email incorrectly labeled as Spam.">
+                                        <div class="cm-label">False Spam (FP)</div>
+                                        <div class="cm-value" id="cmFP">0</div>
+                                    </div>
+                                    <div class="cm-cell fn-cell" title="False Negative: Spam email incorrectly labeled as Legitimate.">
+                                        <div class="cm-label">False Ham (FN)</div>
+                                        <div class="cm-value" id="cmFN">0</div>
+                                    </div>
+                                    <div class="cm-cell tp-cell" title="True Positive: Spam email correctly classified.">
+                                        <div class="cm-label">True Spam (TP)</div>
+                                        <div class="cm-value" id="cmTP">0</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- KEYWORD IMPORTANCES -->
+                            <div class="analytics-sub-card">
+                                <h3><i class="fa-solid fa-list-check"></i> Most Predictive Keywords</h3>
+                                <p class="sub-card-desc">Top coefficients in current active model (<span id="kwModelName">Naive Bayes</span>)</p>
+                                
+                                <div class="keyword-lists-container">
+                                    <!-- SPAM WORDS -->
+                                    <div class="keyword-sub-list">
+                                        <div class="keyword-sub-header text-spam">
+                                            <i class="fa-solid fa-triangle-exclamation"></i> Top Spam Indicators
+                                        </div>
+                                        <ul class="keyword-ul" id="spamKeywordsUl">
+                                            <li class="keyword-skeleton-li"></li>
+                                            <li class="keyword-skeleton-li"></li>
+                                            <li class="keyword-skeleton-li"></li>
+                                        </ul>
+                                    </div>
+                                    <!-- HAM WORDS -->
+                                    <div class="keyword-sub-list">
+                                        <div class="keyword-sub-header text-ham">
+                                            <i class="fa-solid fa-circle-check"></i> Top Ham Indicators
+                                        </div>
+                                        <ul class="keyword-ul" id="hamKeywordsUl">
+                                            <li class="keyword-skeleton-li"></li>
+                                            <li class="keyword-skeleton-li"></li>
+                                            <li class="keyword-skeleton-li"></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+
+            </section>
+        </main>
+        
+        <footer class="dashboard-footer">
+            <p>Designed with glassmorphic dark-mode aesthetics for maximum visual engagement. No heavy frameworks required.</p>
+        </footer>
+    </div>
+
+    <!-- Script File -->
+    <script src="/spam.js"></script>
+</body>
+</html>
