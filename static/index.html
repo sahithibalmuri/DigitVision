@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DigitVision AI - CNN Handwritten Digit Recognizer</title>
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="glow-bg"></div>
+    
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-logo">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20ZM11 7H13V13H11V7ZM11 15H13V17H11V15Z" fill="url(#logo-grad)"/>
+                    <defs>
+                        <linearGradient id="logo-grad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                            <stop stop-color="#a855f7"/>
+                            <stop offset="1" stop-color="#06b6d4"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <h1>DigitVision <span>AI</span></h1>
+            </div>
+            <p class="header-subtitle">Interactive Convolutional Neural Network (CNN) Visualizer & Learning Sandbox</p>
+        </header>
+
+        <!-- Main Dashboard Layout -->
+        <main class="dashboard-grid">
+            
+            <!-- COLUMN 1: Drawing & Inference -->
+            <section class="dashboard-col col-left">
+                
+                <!-- Card 1: Drawing Board -->
+                <div class="glass-card drawing-card">
+                    <div class="card-header">
+                        <h2>1. Drawing Canvas</h2>
+                        <span class="badge active-badge" id="model-status-badge">Model Ready</span>
+                    </div>
+                    <p class="card-desc">Draw any digit (0-9) inside the grid below. The brush mimics handwritten strokes.</p>
+                    
+                    <div class="canvas-wrapper">
+                        <canvas id="drawing-canvas" width="280" height="280"></canvas>
+                    </div>
+                    
+                    <div class="canvas-controls">
+                        <div class="brush-size-control">
+                            <label for="brush-size">Brush Size: <span id="brush-size-val">16px</span></label>
+                            <input type="range" id="brush-size" min="8" max="28" value="16" class="slider">
+                        </div>
+                        <div class="btn-group">
+                            <button id="clear-btn" class="btn btn-secondary">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/></svg>
+                                Clear Canvas
+                            </button>
+                            <button id="predict-btn" class="btn btn-primary">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                Run Inference
+                            </button>
+                        </div>
+                        <div class="toggle-control">
+                            <label class="switch">
+                                <input type="checkbox" id="realtime-toggle" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span class="toggle-label">Real-time Inference (on draw)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Neural Network Predictions -->
+                <div class="glass-card prediction-card">
+                    <div class="card-header">
+                        <h2>2. Network Output</h2>
+                        <div class="confidence-text">Top Prediction: <span id="predicted-value">-</span></div>
+                    </div>
+                    
+                    <div class="prediction-body">
+                        <!-- Top Output Highlight -->
+                        <div class="prediction-hero">
+                            <div class="prediction-circle">
+                                <span id="digit-display">?</span>
+                            </div>
+                            <div class="prediction-meta">
+                                <span class="meta-label">CONFIDENCE</span>
+                                <span class="meta-val" id="confidence-percentage">0%</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Mini Bar Charts for each class -->
+                        <div class="probability-list">
+                            <!-- Loop 0 to 9 -->
+                            <template id="prob-row-template">
+                                <div class="prob-row">
+                                    <span class="digit-label">0</span>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar-fill" style="width: 0%"></div>
+                                    </div>
+                                    <span class="digit-pct">0%</span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- COLUMN 2: CNN Visualization & Hyperparameter Training -->
+            <section class="dashboard-col col-right">
+                
+                <!-- Card 3: Hyperparameter Training Sandbox -->
+                <div class="glass-card training-card">
+                    <div class="card-header">
+                        <h2>3. CNN Training Sandbox</h2>
+                        <span class="badge" id="train-status-badge">Idle</span>
+                    </div>
+                    <p class="card-desc">Configure parameters and train a new PyTorch Convolutional Neural Network from scratch in real-time.</p>
+                    
+                    <div class="hyperparameter-grid">
+                        <div class="input-group">
+                            <label for="param-optimizer">Optimizer</label>
+                            <select id="param-optimizer">
+                                <option value="Adam" selected>Adam (Adaptive)</option>
+                                <option value="SGD">SGD (Stochastic Gradient)</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="param-lr">Learning Rate</label>
+                            <select id="param-lr">
+                                <option value="0.01">0.01 (Fast)</option>
+                                <option value="0.001" selected>0.001 (Recommended)</option>
+                                <option value="0.0001">0.0001 (Slow/Precise)</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="param-complexity">CNN Complexity</label>
+                            <select id="param-complexity">
+                                <option value="Small">Small (Lightweight)</option>
+                                <option value="Medium" selected>Medium (Standard)</option>
+                                <option value="Large">Large (Deep)</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="param-size">Training Set Size</label>
+                            <select id="param-size">
+                                <option value="5000">5,000 (Super Fast)</option>
+                                <option value="10000">10,000 (Fast)</option>
+                                <option value="20000" selected>20,000 (Balanced)</option>
+                                <option value="60000">60,000 (Full Dataset)</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="param-epochs">Epochs</label>
+                            <input type="number" id="param-epochs" min="1" max="10" value="3">
+                        </div>
+                        <div class="input-group">
+                            <label for="param-batch">Batch Size</label>
+                            <select id="param-batch">
+                                <option value="32">32</option>
+                                <option value="64" selected>64</option>
+                                <option value="128">128</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="training-controls">
+                        <button id="start-train-btn" class="btn btn-action-primary">Start Training</button>
+                        <button id="stop-train-btn" class="btn btn-action-secondary" disabled>Stop Training</button>
+                    </div>
+
+                    <div class="training-progress-section" id="progress-container" style="display: none;">
+                        <div class="progress-info">
+                            <span id="progress-message">Preparing datasets...</span>
+                            <span id="epoch-counter">Epoch 0/0</span>
+                        </div>
+                        <div class="progress-bar-container large-bar">
+                            <div class="progress-bar-fill pulse" id="training-progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Learning Curves -->
+                <div class="glass-card chart-card">
+                    <div class="card-header">
+                        <h2>4. Real-time Learning Curves</h2>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="metrics-chart"></canvas>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Dynamic Visualizations: CNN Layers & Feature Maps -->
+        <section class="glass-card visualizer-card">
+            <div class="card-header">
+                <h2>5. Inside the CNN: Live Feature Map Visualizer</h2>
+                <div class="info-tooltip">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    <span class="tooltip-text">Convolutional layers apply filters to extract details. Layer 1 detects primitive features (edges, borders). Layer 2 processes Layer 1's features, detecting advanced abstractions (loops, intersections) for digit separation.</span>
+                </div>
+            </div>
+            <p class="card-desc">See exactly what the Convolutional Neural Network "sees" at each processing stage for your drawn digit in real-time.</p>
+
+            <div class="fmap-container">
+                <!-- Layer 1 -->
+                <div class="fmap-layer-section">
+                    <div class="layer-header">
+                        <h3>Convolutional Layer 1 (Conv1)</h3>
+                        <span class="layer-specs">16 Filters | 3x3 Kernels | Feature Resolution: 28x28</span>
+                    </div>
+                    <p class="layer-desc">Captures simple textures, sharp contrasts, and basic boundaries of the stroke.</p>
+                    <div class="fmap-grid" id="fmap-l1-grid">
+                        <!-- 8 feature maps loaded dynamically -->
+                        <div class="fmap-placeholder">Draw on canvas to generate maps...</div>
+                    </div>
+                </div>
+
+                <!-- Connector Arrow -->
+                <div class="fmap-connector">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </div>
+
+                <!-- Layer 2 -->
+                <div class="fmap-layer-section">
+                    <div class="layer-header">
+                        <h3>Convolutional Layer 2 (Conv2)</h3>
+                        <span class="layer-specs">32 Filters | 3x3 Kernels | Feature Resolution: 14x14</span>
+                    </div>
+                    <p class="layer-desc">Aggregates early borders into localized geometry, identifying key structures like intersections, circles, and curves.</p>
+                    <div class="fmap-grid" id="fmap-l2-grid">
+                        <!-- 8 feature maps loaded dynamically -->
+                        <div class="fmap-placeholder">Draw on canvas to generate maps...</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="app-footer-info">
+            <p>Built with <strong>PyTorch</strong>, <strong>Pillow</strong>, and standard <strong>Python HTTP Server</strong>.</p>
+            <p>Designed for teaching and experiencing modern deep learning concepts.</p>
+        </footer>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>

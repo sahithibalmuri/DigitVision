@@ -1,0 +1,12 @@
+# Dataset and model weights
+data/
+mnist_cnn.pt
+
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS metadata
+.DS_Store
+Thumbs.db
